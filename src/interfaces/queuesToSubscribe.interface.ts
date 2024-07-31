@@ -4,5 +4,5 @@ export interface IWorker {
 
 export interface IQueuesToSubscribe {
   NAME: string;
-  HANDLER: new () => IWorker;
+  HANDLER: new (...args: any[]) => IWorker;
 }
