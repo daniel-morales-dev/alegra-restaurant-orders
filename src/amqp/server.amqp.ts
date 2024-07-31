@@ -1,32 +1,29 @@
-import client, { Connection, Channel } from "amqplib";
+// src/amqp/server.amqp.ts
+import client, { Connection, Channel, Message } from "amqplib";
 import { AMQP_URL } from "../config/app.config";
-import Container, { Service } from "typedi";
+import { Service, Container } from "typedi";
 import { QUEUE_LIST } from "./queues.amqp";
 
-type HandlerCB = (msg: string) => any;
+type HandlerCB = (msg: string, ack: () => void) => any;
 
 @Service()
 class RabbitMQConnection {
   connection!: Connection;
   channel!: Channel;
-  private connected!: Boolean;
+  private connected: boolean = false;
 
   async connect() {
     if (this.connected && this.channel) return;
     try {
-      console.log(`⌛️ Connecting to Rabbit-MQ Server`);
+      console.log("⌛️ Connecting to RabbitMQ Server");
       this.connection = await client.connect(AMQP_URL);
-
-      console.log(`✅ Rabbit MQ Connection is ready`);
-
+      console.log("✅ RabbitMQ Connection is ready");
       this.channel = await this.connection.createChannel();
-
-      console.log(`🛸 Created RabbitMQ Channel successfully`);
-
+      console.log("🛸 Created RabbitMQ Channel successfully");
       this.connected = true;
     } catch (error) {
       console.error(error);
-      console.error(`Not connected to MQ Server`);
+      console.error("Not connected to MQ Server");
     }
   }
 
@@ -34,33 +31,22 @@ class RabbitMQConnection {
     handleIncomingNotification: HandlerCB,
     queueName: string,
   ): Promise<void> {
-    await this.channel.assertQueue(queueName, {
-      durable: true,
-    });
-
+    await this.channel.assertQueue(queueName, { durable: true });
     this.channel.consume(
       queueName,
       (msg) => {
-        {
-          if (!msg) {
-            return console.error(`Invalid incoming message`);
-          }
-          handleIncomingNotification(msg?.content?.toString());
-          this.channel.ack(msg);
-        }
+        if (!msg) return console.error("Invalid incoming message");
+        handleIncomingNotification(msg.content.toString(), () =>
+          this.channel.ack(msg),
+        );
       },
-      {
-        noAck: false,
-      },
+      { noAck: false },
     );
   }
 
   async sendToQueue(queue: string, message: any) {
     try {
-      if (!this.channel) {
-        await this.connect();
-      }
-
+      if (!this.channel) await this.connect();
       this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)));
     } catch (error) {
       console.error(error);
@@ -71,7 +57,10 @@ class RabbitMQConnection {
   async initializeSubscription() {
     for (const queue of QUEUE_LIST) {
       const handlerInstance = Container.get(queue.HANDLER);
-      await this.consume((msg: string) => handlerInstance.run(msg), queue.NAME);
+      await this.consume(
+        (msg: string, ack: () => void) => handlerInstance.run(msg, ack),
+        queue.NAME,
+      );
       console.info(`Subscribed to queue: ${queue.NAME}`);
     }
   }
