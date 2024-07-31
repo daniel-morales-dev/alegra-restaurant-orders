@@ -1,10 +1,16 @@
 import app from "../app";
 import morgan from "morgan";
+import http from "http";
+import WebSocketServer from "./webSocket";
 
 export default class Server {
   public port: number;
+  private readonly server: http.Server;
+
   constructor(port: number) {
     this.port = port;
+    this.server = http.createServer(app);
+    WebSocketServer.initialize(this.server);
   }
 
   static init(port: number) {
@@ -18,6 +24,6 @@ export default class Server {
       ),
     );
     app.disable("x-powered-by");
-    app.listen(this.port, callback);
+    this.server.listen(this.port, callback);
   }
 }

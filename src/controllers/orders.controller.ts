@@ -17,9 +17,10 @@ export class OrdersController {
   @Post("/register")
   async registerOrder(@Body() body: any) {
     const messageId = v4();
-    const msg: IProcessOrderMessage = {
+    const msg = {
       action: QUEUES.REGISTER_ORDER.NAME,
-      data: { uuid: messageId, status: "pending" },
+      uuid: messageId,
+      status: "pending",
     };
 
     await this.redisClient.set(

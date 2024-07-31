@@ -34,10 +34,18 @@ class RabbitMQConnection {
     this.channel.consume(
       queueName,
       (msg) => {
-        if (!msg) return console.error("Invalid incoming message");
-        handleIncomingNotification(msg.content.toString(), () =>
-          this.channel.ack(msg),
-        );
+        if (!msg) {
+          console.error("Invalid incoming message");
+          return;
+        }
+        try {
+          handleIncomingNotification(msg.content.toString(), () =>
+            this.channel.ack(msg),
+          );
+        } catch (error) {
+          console.error("Error processing message:", error);
+          this.channel.nack(msg, false, true);
+        }
       },
       { noAck: false },
     );
@@ -45,10 +53,12 @@ class RabbitMQConnection {
 
   async sendToQueue<T>(queue: string, message: T) {
     try {
-      if (!this.channel) await this.connect();
+      if (!this.channel) {
+        await this.connect();
+      }
       this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)));
     } catch (error) {
-      console.error(error);
+      console.error("Error sending message to queue:", error);
       throw error;
     }
   }
