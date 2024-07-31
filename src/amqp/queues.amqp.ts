@@ -1,0 +1,3 @@
+export const QUEUES = {
+  REGISTER_ORDER: "REGISTER_ORDER",
+};
