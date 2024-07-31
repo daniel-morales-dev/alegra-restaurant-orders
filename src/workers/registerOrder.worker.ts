@@ -1,6 +1,4 @@
-// src/workers/registerOrder.worker.ts
 import { Service } from "typedi";
-import { Message } from "amqplib";
 
 @Service()
 export class RegisterOrderWorker {

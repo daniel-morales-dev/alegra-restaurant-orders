@@ -1,5 +1,4 @@
-// src/amqp/server.amqp.ts
-import client, { Connection, Channel, Message } from "amqplib";
+import client, { Connection, Channel } from "amqplib";
 import { AMQP_URL } from "../config/app.config";
 import { Service, Container } from "typedi";
 import { QUEUE_LIST } from "./queues.amqp";
