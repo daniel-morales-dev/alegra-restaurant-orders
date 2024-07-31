@@ -43,7 +43,7 @@ class RabbitMQConnection {
     );
   }
 
-  async sendToQueue(queue: string, message: any) {
+  async sendToQueue<T>(queue: string, message: T) {
     try {
       if (!this.channel) await this.connect();
       this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)));
@@ -60,7 +60,7 @@ class RabbitMQConnection {
         (msg: string, ack: () => void) => handlerInstance.run(msg, ack),
         queue.NAME,
       );
-      console.info(`[INFO]Subscribed to queue: ${queue.NAME}`);
+      console.info(`[INFO] Subscribed to queue: ${queue.NAME}`);
     }
   }
 }

@@ -4,6 +4,7 @@ import { Service } from "typedi";
 import { v4 } from "uuid";
 import { QUEUES } from "../amqp/queues.amqp";
 import RedisClient from "../redis/redis.client";
+import { IProcessOrderMessage } from "../interfaces/messages/processOrderMessage.interface";
 
 @JsonController("/v1/orders")
 @Service()
@@ -16,7 +17,7 @@ export class OrdersController {
   @Post("/register")
   async registerOrder(@Body() body: any) {
     const messageId = v4();
-    const msg = {
+    const msg: IProcessOrderMessage = {
       action: QUEUES.REGISTER_ORDER.NAME,
       data: { uuid: messageId, status: "pending" },
     };
@@ -30,7 +31,10 @@ export class OrdersController {
       10800,
     );
 
-    await serverAmqp.sendToQueue(QUEUES.REGISTER_ORDER.NAME, msg);
+    await serverAmqp.sendToQueue<IProcessOrderMessage>(
+      QUEUES.REGISTER_ORDER.NAME,
+      msg,
+    );
 
     return msg;
   }
