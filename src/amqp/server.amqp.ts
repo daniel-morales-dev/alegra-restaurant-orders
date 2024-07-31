@@ -1,7 +1,7 @@
 import client, { Connection, Channel } from "amqplib";
 import { AMQP_URL } from "../config/app.config";
 import { Service, Container } from "typedi";
-import { QUEUE_LIST } from "./queues.amqp";
+import { QUEUES_TO_SUBSCRIBE } from "./queues.amqp";
 
 type HandlerCB = (msg: string, ack: () => void) => any;
 
@@ -54,13 +54,13 @@ class RabbitMQConnection {
   }
 
   async initializeSubscription() {
-    for (const queue of QUEUE_LIST) {
+    for (const queue of QUEUES_TO_SUBSCRIBE) {
       const handlerInstance = Container.get(queue.HANDLER);
       await this.consume(
         (msg: string, ack: () => void) => handlerInstance.run(msg, ack),
         queue.NAME,
       );
-      console.info(`Subscribed to queue: ${queue.NAME}`);
+      console.info(`[INFO]Subscribed to queue: ${queue.NAME}`);
     }
   }
 }

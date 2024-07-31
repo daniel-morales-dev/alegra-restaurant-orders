@@ -17,6 +17,7 @@
     "class-validator": "^0.14.1",
     "cors": "^2.8.5",
     "express": "^4.19.2",
+    "ioredis": "^5.4.1",
     "morgan": "^1.10.0",
     "reflect-metadata": "^0.2.2",
     "routing-controllers": "^0.10.4",
