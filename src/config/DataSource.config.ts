@@ -9,7 +9,7 @@ export const AppDataSourceMongoDB = new DataSource({
   useNewUrlParser: true,
   retryWrites: true,
   entities: [resolve("src/models/*{.ts,.js}")],
-  migrations: [resolve("src/models/migrations/*{.ts,.js}")],
+  migrations: [resolve("src/migrations/*{.ts,.js}")],
   synchronize: false,
   logging: true,
 });
