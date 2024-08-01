@@ -30,21 +30,31 @@ class RabbitMQConnection {
     handleIncomingNotification: HandlerCB,
     queueName: string,
   ): Promise<void> {
-    await this.channel.assertQueue(queueName, { durable: true });
+    await this.channel.assertQueue(queueName, {
+      durable: true,
+    });
     this.channel.consume(
       queueName,
-      (msg) => {
+      async (msg) => {
         if (!msg) {
           console.error("Invalid incoming message");
           return;
         }
         try {
-          handleIncomingNotification(msg.content.toString(), () =>
+          await handleIncomingNotification(msg.content.toString(), () =>
             this.channel.ack(msg),
           );
         } catch (error) {
           console.error("Error processing message:", error);
-          this.channel.nack(msg, false, true);
+          const errorMsg = {
+            originalMessage: msg.content.toString(),
+            error: error,
+          };
+          this.channel.sendToQueue(
+            "error_queue",
+            Buffer.from(JSON.stringify(errorMsg)),
+          );
+          this.channel.nack(msg, false, false); // Do not requeue
         }
       },
       { noAck: false },

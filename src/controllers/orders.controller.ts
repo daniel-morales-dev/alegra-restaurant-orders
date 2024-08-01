@@ -5,17 +5,18 @@ import { v4 } from "uuid";
 import { QUEUES } from "../amqp/queues.amqp";
 import RedisClient from "../redis/redis.client";
 import { IProcessOrderMessage } from "../interfaces/messages/processOrderMessage.interface";
+import { OrderService } from "../services/order.service";
 
 @JsonController("/v1/orders")
 @Service()
 export class OrdersController {
   private redisClient: RedisClient;
 
-  constructor() {
+  constructor(private readonly orderService: OrderService) {
     this.redisClient = RedisClient.getInstance();
   }
   @Post("/register")
-  async registerOrder(@Body() body: any) {
+  async registerOrder() {
     const messageId = v4();
     const msg = {
       action: QUEUES.REGISTER_ORDER.NAME,
@@ -31,6 +32,8 @@ export class OrdersController {
       },
       10800,
     );
+
+    await this.orderService.createOrder({ uuid: messageId, status: "pending" });
 
     await serverAmqp.sendToQueue<IProcessOrderMessage>(
       QUEUES.REGISTER_ORDER.NAME,
