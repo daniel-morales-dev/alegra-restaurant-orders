@@ -2,8 +2,7 @@ import { Service } from "typedi";
 import { IWorker } from "../interfaces/queuesToSubscribe.interface";
 import RedisClient from "../redis/redis.client";
 import serverAmqp from "../amqp/server.amqp";
-import { IReceiveOrderFinished } from "../interfaces/messages/receiveOrderFinished.interface";
-import WebSocketServer from "../server/webSocket";
+import { IUpdateOrder } from "../interfaces/messages/receiveOrderFinished.interface";
 import { OrdersRepository } from "../repositories/orders.repository";
 import { NotFoundError } from "routing-controllers";
 
@@ -16,9 +15,9 @@ export class UpdateStatusOrder implements IWorker {
   }
 
   async run(message: string, ack: () => void) {
-    const msg: IReceiveOrderFinished = JSON.parse(message);
+    const msg: IUpdateOrder = JSON.parse(message);
     try {
-      const { keyRedis, uuid, status } = msg;
+      const { keyRedis, uuid, status, recipe } = msg;
       console.info(`[INFO] Order ${msg.uuid} updating status`);
 
       const order = await this.orderRepository.findOne({
@@ -30,6 +29,7 @@ export class UpdateStatusOrder implements IWorker {
       if (!order) throw new NotFoundError("Order not found");
 
       order.status = status;
+      order.recipe = recipe;
 
       // Save new status order
 

@@ -1,4 +1,11 @@
-import { Body, JsonController, Post } from "routing-controllers";
+import {
+  Body,
+  Get,
+  JsonController,
+  Post,
+  QueryParam,
+  QueryParams,
+} from "routing-controllers";
 import serverAmqp from "../amqp/server.amqp";
 import { Service } from "typedi";
 import { v4 } from "uuid";
@@ -41,5 +48,12 @@ export class OrdersController {
     );
 
     return msg;
+  }
+
+  @Get("/status")
+  async getOrderStatuses(
+    @QueryParam("uuids", { isArray: true, type: String }) uuids: string[],
+  ) {
+    return this.orderService.getMultipleStatusOrder(uuids);
   }
 }

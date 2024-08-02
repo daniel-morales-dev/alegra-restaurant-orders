@@ -5,4 +5,5 @@ export interface IWorker {
 export interface IQueuesToSubscribe {
   NAME: string;
   HANDLER: new (...args: any[]) => IWorker;
+  PREFETCH?: number;
 }

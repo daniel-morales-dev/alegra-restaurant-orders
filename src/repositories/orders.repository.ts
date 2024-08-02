@@ -8,4 +8,15 @@ export class OrdersRepository extends MongoRepository<Orders> {
     const dataSource = Container.get<DataSource>("AppDataSourceMongoDB");
     super(Orders, dataSource.createEntityManager());
   }
+
+  findByUuids(uuids: string[]) {
+    if (!uuids) return [];
+    return this.find({
+      where: {
+        uuid: {
+          $in: uuids,
+        },
+      },
+    });
+  }
 }

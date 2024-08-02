@@ -7,8 +7,8 @@ type HandlerCB = (msg: string, ack: () => void) => any;
 
 @Service()
 class RabbitMQConnection {
-  connection!: Connection;
-  channel!: Channel;
+  private connection!: Connection;
+  private channel!: Channel;
   private connected: boolean = false;
 
   async connect() {
@@ -18,6 +18,7 @@ class RabbitMQConnection {
       this.connection = await client.connect(AMQP_URL);
       console.log("✅ RabbitMQ Connection is ready");
       this.channel = await this.connection.createChannel();
+      this.channel.prefetch(1);
       console.log("🛸 Created RabbitMQ Channel successfully");
       this.connected = true;
     } catch (error) {
@@ -29,10 +30,14 @@ class RabbitMQConnection {
   async consume(
     handleIncomingNotification: HandlerCB,
     queueName: string,
+    prefetch: number = 1,
   ): Promise<void> {
     await this.channel.assertQueue(queueName, {
       durable: true,
     });
+
+    this.channel.prefetch(prefetch);
+
     this.channel.consume(
       queueName,
       async (msg) => {
@@ -76,11 +81,15 @@ class RabbitMQConnection {
   async initializeSubscription() {
     for (const queue of QUEUES_TO_SUBSCRIBE) {
       const handlerInstance = Container.get(queue.HANDLER);
+      const prefetch = queue.PREFETCH || 1;
       await this.consume(
         (msg: string, ack: () => void) => handlerInstance.run(msg, ack),
         queue.NAME,
+        prefetch,
       );
-      console.info(`[INFO] Subscribed to queue: ${queue.NAME}`);
+      console.info(
+        `[INFO] Subscribed to queue: ${queue.NAME} with prefetch: ${prefetch}`,
+      );
     }
   }
 }

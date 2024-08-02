@@ -1,7 +1,6 @@
 import app from "../app";
 import morgan from "morgan";
 import http from "http";
-import WebSocketServer from "./webSocket";
 import { AppDataSourceMongoDB } from "../config/DataSource.config";
 
 export default class Server {
@@ -11,7 +10,6 @@ export default class Server {
   constructor(port: number) {
     this.port = port;
     this.server = http.createServer(app);
-    WebSocketServer.initialize(this.server);
   }
 
   static init(port: number) {

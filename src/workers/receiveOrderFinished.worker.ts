@@ -1,6 +1,5 @@
 import { IWorker } from "../interfaces/queuesToSubscribe.interface";
 import { Service } from "typedi";
-import WebSocketServer from "../server/webSocket";
 import RedisClient from "../redis/redis.client";
 import { IReceiveOrderFinished } from "../interfaces/messages/receiveOrderFinished.interface";
 import serverAmqp from "../amqp/server.amqp";
@@ -20,14 +19,6 @@ export class ReceiveOrderFinishedWorker implements IWorker {
     try {
       const { keyRedis, uuid, status } = msg;
       console.info(`[INFO] Order ${uuid} finished`);
-
-      const wsServer = WebSocketServer.getInstance();
-      wsServer.broadcast(
-        JSON.stringify({
-          type: "ORDER_FINISHED",
-          data: msg,
-        }),
-      );
 
       await this.redisClient.set(
         keyRedis,
