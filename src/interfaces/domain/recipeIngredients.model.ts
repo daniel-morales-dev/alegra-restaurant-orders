@@ -3,4 +3,5 @@ export interface RecipeIngredients {
   recipeId: number;
   ingredientId: number;
   quantity: number;
+  name?: string;
 }

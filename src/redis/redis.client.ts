@@ -24,9 +24,9 @@ class RedisClient {
     return this.client;
   }
 
-  public async set(
+  public async set<T>(
     key: string,
-    value: any,
+    value: T,
     expireInSeconds?: number,
   ): Promise<void> {
     if (expireInSeconds) {
@@ -36,7 +36,7 @@ class RedisClient {
     }
   }
 
-  public async get(key: string): Promise<any> {
+  public async get<T>(key: string): Promise<T | null> {
     const value = await this.client.get(key);
     return value ? JSON.parse(value) : null;
   }

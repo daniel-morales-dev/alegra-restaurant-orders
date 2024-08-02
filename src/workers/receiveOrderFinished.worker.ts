@@ -17,7 +17,7 @@ export class ReceiveOrderFinishedWorker implements IWorker {
   async run(message: string, ack: () => void) {
     const msg: IReceiveOrderFinished = JSON.parse(message);
     try {
-      const { keyRedis, uuid, status } = msg;
+      const { keyRedis, uuid, status, recipe } = msg;
       console.info(`[INFO] Order ${uuid} finished`);
 
       await this.redisClient.set(
@@ -31,6 +31,7 @@ export class ReceiveOrderFinishedWorker implements IWorker {
       if (!order) throw new NotFoundError("Order not found");
 
       order.status = "finished";
+      order.recipe = recipe;
 
       await this.orderRepository.save(order);
 
