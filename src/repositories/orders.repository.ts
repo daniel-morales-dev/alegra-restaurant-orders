@@ -27,9 +27,6 @@ export class OrdersRepository extends MongoRepository<Orders> {
     const endOfDay = new Date();
     endOfDay.setHours(23, 59, 59, 999);
 
-    console.log("Start of Day:", startOfDay);
-    console.log("End of Day:", endOfDay);
-
     const orders = await this.find({
       where: {
         created_at: {
@@ -38,8 +35,6 @@ export class OrdersRepository extends MongoRepository<Orders> {
         },
       },
     });
-
-    console.log("Orders found:", orders);
 
     return orders;
   }
