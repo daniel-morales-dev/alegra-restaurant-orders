@@ -19,4 +19,20 @@ export class OrdersRepository extends MongoRepository<Orders> {
       },
     });
   }
+  async findOrdersTakenToday() {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    return this.find({
+      where: {
+        createdAt: {
+          $gte: startOfDay,
+          $lte: endOfDay,
+        },
+      },
+    });
+  }
 }

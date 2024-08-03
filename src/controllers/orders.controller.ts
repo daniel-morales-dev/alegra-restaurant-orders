@@ -4,7 +4,6 @@ import {
   JsonController,
   Post,
   QueryParam,
-  QueryParams,
 } from "routing-controllers";
 import serverAmqp from "../amqp/server.amqp";
 import { Service } from "typedi";
@@ -18,36 +17,26 @@ import { OrderService } from "../services/order.service";
 @Service()
 export class OrdersController {
   private redisClient: RedisClient;
+  private orderQueue: Array<{ uuid: string; status: string }> = [];
+  private readonly BATCH_SIZE = 10;
+  private readonly PROCESS_INTERVAL = 5000; // 5 seconds
 
   constructor(private readonly orderService: OrderService) {
     this.redisClient = RedisClient.getInstance();
+    this.startOrderProcessing();
   }
+
   @Post("/register")
   async registerOrder() {
     const messageId = v4();
-    const msg = {
-      action: QUEUES.REGISTER_ORDER.NAME,
+    const newOrder = {
       uuid: messageId,
       status: "pending",
     };
 
-    await this.redisClient.set(
-      `${QUEUES.REGISTER_ORDER.NAME}:${messageId}`,
-      {
-        status: "pending",
-        id: messageId,
-      },
-      10800,
-    );
+    this.orderQueue.push(newOrder);
 
-    await this.orderService.createOrder({ uuid: messageId, status: "pending" });
-
-    await serverAmqp.sendToQueue<IProcessOrderMessage>(
-      QUEUES.REGISTER_ORDER.NAME,
-      msg,
-    );
-
-    return msg;
+    return newOrder;
   }
 
   @Get("/status")
@@ -55,5 +44,50 @@ export class OrdersController {
     @QueryParam("uuids", { isArray: true, type: String }) uuids: string[],
   ) {
     return this.orderService.getMultipleStatusOrder(uuids);
+  }
+
+  @Get("/today")
+  async getOrderToday() {
+    return this.orderService.getTodayOrders();
+  }
+
+  private startOrderProcessing() {
+    setInterval(async () => {
+      if (this.orderQueue.length === 0) return;
+
+      const ordersToProcess = this.orderQueue.splice(0, this.BATCH_SIZE);
+
+      try {
+        const redisPromises = ordersToProcess.map((order) =>
+          this.redisClient.set(
+            `${QUEUES.REGISTER_ORDER.NAME}:${order.uuid}`,
+            { status: "pending", id: order.uuid },
+            10800,
+          ),
+        );
+
+        const dbPromises = ordersToProcess.map((order) =>
+          this.orderService.createOrder({
+            uuid: order.uuid,
+            status: "pending",
+          }),
+        );
+
+        const amqpPromises = ordersToProcess.map((order) =>
+          serverAmqp.sendToQueue<IProcessOrderMessage>(
+            QUEUES.REGISTER_ORDER.NAME,
+            {
+              action: QUEUES.REGISTER_ORDER.NAME,
+              uuid: order.uuid,
+              status: "pending",
+            },
+          ),
+        );
+
+        await Promise.all([...redisPromises, ...dbPromises, ...amqpPromises]);
+      } catch (error) {
+        console.error("Error processing orders:", error);
+      }
+    }, this.PROCESS_INTERVAL);
   }
 }

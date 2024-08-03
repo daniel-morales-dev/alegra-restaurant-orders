@@ -7,6 +7,7 @@ import { In } from "typeorm";
 @Service()
 export class OrderService {
   constructor(private readonly orderRepository: OrdersRepository) {}
+
   async createOrder(order: ICreateOrder) {
     const newOrder = this.orderRepository.create(order);
     return await this.orderRepository.save(newOrder);
@@ -19,6 +20,10 @@ export class OrderService {
   }
 
   async getMultipleStatusOrder(uuid: string[]) {
-    return await this.orderRepository.findByUuids(uuid);
+    return this.orderRepository.findByUuids(uuid);
+  }
+
+  async getTodayOrders() {
+    return this.orderRepository.findOrdersTakenToday();
   }
 }

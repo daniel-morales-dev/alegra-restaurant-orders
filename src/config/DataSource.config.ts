@@ -1,3 +1,4 @@
+require("dotenv").config();
 import { DataSource } from "typeorm";
 import { resolve } from "path";
 import Container from "typedi";

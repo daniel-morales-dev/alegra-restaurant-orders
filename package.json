@@ -7,7 +7,9 @@
     "build": "tsc -p tsconfig.json",
     "start": "ts-node --files src/index.ts",
     "dev": "nodemon",
-    "test": "jest -w 1 --detectOpenHandles --forceExit"
+    "test": "jest -w 1 --detectOpenHandles --forceExit",
+    "migration:create": "ts-node node_modules/typeorm/cli.js migration:create",
+    "migration:run": "ts-node node_modules/typeorm/cli.js migration:run -d src/config/DataSource.config.ts"
   },
   "keywords": [],
   "author": "",
